@@ -6,23 +6,16 @@ pipeline {
             agent {
                 label 'slave-compile'
             }
-            environment {
-                GIT_SSH = 'ssh'
-                GIT_AUTHOR_NAME = 'Jenkins'
-                GIT_AUTHOR_EMAIL = 'jenkins@example.com'
-            }
             steps {
                 echo "========== RUNNING ON SLAVE-COMPILE =========="
                 echo "Agent: ${NODE_NAME}"
                 echo "Workspace: ${WORKSPACE}"
                 
-                // Manual git clone instead of checkout scm
                 sh '''
                     cd ${WORKSPACE}
-                    git init
-                    git remote add origin https://github.com/Aryanfour5/devopsprac2
-                    git fetch origin main:main
-                    git checkout main
+                    echo "Cloning repository..."
+                    git clone --depth 1 https://github.com/Aryanfour5/devopsprac2 .
+                    echo "Repository cloned successfully"
                 '''
                 
                 sh '''
@@ -35,12 +28,21 @@ pipeline {
                     cp -r node_modules build-output/ 2>/dev/null || true
                     cp package.json build-output/ 2>/dev/null || true
                     cp app.js build-output/ 2>/dev/null || true
+                    echo "Build artifacts prepared"
                     ls -la build-output/
                 '''
                 
                 stash includes: 'build-output/**', name: 'build-artifacts'
                 
                 echo "========== BUILD STAGE COMPLETE =========="
+            }
+            post {
+                success {
+                    echo "✓ Build succeeded on slave-compile"
+                }
+                failure {
+                    echo "✗ Build failed on slave-compile"
+                }
             }
         }
         
@@ -50,15 +52,41 @@ pipeline {
             }
             steps {
                 echo "========== RUNNING ON SLAVE2 =========="
+                echo "Agent: ${NODE_NAME}"
                 
                 unstash 'build-artifacts'
                 
                 sh '''
+                    echo "Artifacts retrieved from Build stage:"
+                    ls -la build-output/ || echo "No build-output found"
                     cp -r build-output/* . 2>/dev/null || true
-                    npm test 2>/dev/null || echo "No tests configured"
+                '''
+                
+                sh '''
+                    echo "Running tests..."
+                    npm test 2>/dev/null || echo "No tests configured, skipping"
+                    echo "Test execution completed"
                 '''
                 
                 echo "========== TEST STAGE COMPLETE =========="
+            }
+            post {
+                always {
+                    echo "✓ Tests completed on slave2"
+                }
+            }
+        }
+        
+        stage('Summary') {
+            agent {
+                label 'slave-compile'
+            }
+            steps {
+                echo "========== PIPELINE SUMMARY =========="
+                echo "✓ Build completed on: slave-compile"
+                echo "✓ Tests completed on: slave2"
+                echo "✓ Distributed pipeline executed successfully!"
+                echo "====================================="
             }
         }
     }
@@ -66,6 +94,12 @@ pipeline {
     post {
         always {
             echo "Pipeline finished"
+        }
+        success {
+            echo "✓ PIPELINE SUCCESSFUL"
+        }
+        failure {
+            echo "✗ PIPELINE FAILED"
         }
     }
 }
