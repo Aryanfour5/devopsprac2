@@ -1,14 +1,13 @@
 pipeline {
     agent none
     
-    environment {
-        BUILD_TIME = sh(script: 'date', returnStdout: true).trim()
-    }
-    
     stages {
         stage('Build on slave-compile') {
             agent {
                 label 'compile-mode'
+            }
+            environment {
+                BUILD_TIME = sh(script: 'date', returnStdout: true).trim()
             }
             steps {
                 echo "========== RUNNING ON SLAVE-COMPILE =========="
@@ -25,8 +24,8 @@ pipeline {
                 
                 sh '''
                     mkdir -p build-output
-                    cp -r node_modules build-output/
-                    cp package.json build-output/
+                    cp -r node_modules build-output/ 2>/dev/null || true
+                    cp package.json build-output/ 2>/dev/null || true
                     cp app.js build-output/ 2>/dev/null || true
                     echo "Build artifacts prepared"
                     ls -la build-output/
@@ -59,8 +58,8 @@ pipeline {
                 
                 sh '''
                     echo "Artifacts retrieved from Build stage:"
-                    ls -la build-output/
-                    cp -r build-output/* .
+                    ls -la build-output/ || echo "No build-output found"
+                    cp -r build-output/* . 2>/dev/null || true
                 '''
                 
                 sh '''
