@@ -4,7 +4,7 @@ pipeline {
     stages {
         stage('Build on slave-compile') {
             agent {
-                label 'compile-mode'
+                label 'slave-compile'  // Changed from 'compile-mode'
             }
             environment {
                 BUILD_TIME = sh(script: 'date', returnStdout: true).trim()
@@ -47,7 +47,7 @@ pipeline {
         
         stage('Test on slave2') {
             agent {
-                label 'slave2'
+                label 'slave2'  // This is correct
             }
             steps {
                 echo "========== RUNNING ON SLAVE2 =========="
@@ -79,7 +79,7 @@ pipeline {
         
         stage('Summary') {
             agent {
-                label 'compile-mode'
+                label 'slave-compile'  // Changed from 'compile-mode'
             }
             steps {
                 echo "========== PIPELINE SUMMARY =========="
