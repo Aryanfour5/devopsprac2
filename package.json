@@ -1,0 +1,12 @@
+{
+  "name": "jenkins-demo",
+  "version": "1.0.0",
+  "main": "app.js",
+  "scripts": {
+    "build": "echo 'Building...'",
+    "test": "echo 'Running tests...'"
+  },
+  "dependencies": {
+    "express": "^4.18.2"
+  }
+}
